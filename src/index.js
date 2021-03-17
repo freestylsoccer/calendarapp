@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import 'react-big-calendar/lib/css/react-big-calendar.css';
 
 ReactDOM.render(
   <React.StrictMode>
