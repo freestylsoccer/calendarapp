@@ -1,6 +1,8 @@
 import React from 'react'
 import EventsCalendar from "./agenda";
 
+
+
 class App extends React.Component {
   constructor () {
     super()
@@ -9,10 +11,10 @@ class App extends React.Component {
     }
   }
 
-  render () {
+  render () {    
     return (
-      <div>
-        <h1>Hello Dr Pofi</h1>
+      <div className="container-fluid">        
+        <h1>Hello Dr Pofi</h1>        
         <EventsCalendar />
       </div>
       

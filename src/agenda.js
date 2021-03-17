@@ -4,6 +4,9 @@ import {
     momentLocalizer,
   } from 'react-big-calendar'
 import moment from "moment";
+import ModalForm from './modal';
+
+
 require('moment/locale/es.js');
 
 const localizer = momentLocalizer(moment);
@@ -13,6 +16,7 @@ class EventsCalendar extends Component {
     constructor (props) {
         super(props)
         this.state = {
+            isOpen: true,
             myEventsList: [
                 {
                     title: "today",
@@ -26,8 +30,12 @@ class EventsCalendar extends Component {
                 }
             ]
         }
-        this.handleSelect = this.handleSelect.bind(this)
+        this.handleSelect = this.handleSelect.bind(this);        
     }
+
+    openModal = () => this.setState({ isOpen: true });
+    closeModal = () => this.setState({ isOpen: false });
+    // handleSubmit(name) => //some code
 
     onAddItem = (item) => {
         var joined = this.state.myEventsList.concat(item);
@@ -35,6 +43,12 @@ class EventsCalendar extends Component {
       };
 
     handleSelect ({ start, end }) {
+        console.log('clicked')
+        console.log(start)
+        console.log(end)
+        this.setState({ isOpen: true });
+        
+        /*
         const title = window.prompt("New Event name");
         if (title) {
             var newEvent = {
@@ -45,11 +59,24 @@ class EventsCalendar extends Component {
             console.log(newEvent)
             this.onAddItem(newEvent);
         }
+        */
     }
     
     render() {
         return (
             <div style={{height: '100vh', margin: '10px'}}>
+                <button className="btn btn-primary" onClick={this.openModal}>Display Modal Form</button>
+
+                { this.state.isOpen ? 
+                <ModalForm 
+                    closeModal={this.closeModal} 
+                    isOpen={this.state.isOpen} 
+                    handleSubmit={this.handleSubmit}
+                /> 
+                : 
+                null 
+                }
+                
                 <Calendar
                     selectable
                     localizer={localizer}
