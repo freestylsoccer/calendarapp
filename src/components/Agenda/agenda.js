@@ -23,7 +23,15 @@ const INITIAL_STATE = {
     frecuency:"Not Repeated",
     allDay: true,
     isOpen: false,
-    loading: false,    
+    loading: false,
+    item: {
+        end: new Date(),
+        start: new Date(),
+        title: "",
+        description: "",
+        frecuency:"Not Repeated",
+        allDay: true,
+    }
 }
 
 class EventsCalendar extends Component {
@@ -31,7 +39,8 @@ class EventsCalendar extends Component {
         super(props)
         this.state = { ...INITIAL_STATE,
             myEventsList: [] }
-        this.handleSelect = this.handleSelect.bind(this);        
+        this.handleSelect = this.handleSelect.bind(this);
+        this.eventDetails = this.eventDetails.bind(this);
     }
 
     // on component open
@@ -56,35 +65,30 @@ class EventsCalendar extends Component {
               )
     }
 
+    componentWillUnmount = () => {
+        this.props.firebase.agenda();
+    }
+
     openModal = () => this.setState({ isOpen: true });
-    closeModal = () => this.setState({ isOpen: false });
-    
-    onAddItem = (item) => {
-        var joined = this.state.myEventsList.concat(item);
-        this.setState({ myEventsList: joined })
-      };
+    closeModal = () => {
+        this.setState({ ...INITIAL_STATE })
+    };
 
     handleSelect ({ start, end }) {
-        console.log(start)
-        console.log(end )
+        // console.log(start)
+        // console.log(end)
+        let range = false;
         if (start.getHours() === 0 && start.getMinutes() === 0 && start.getSeconds() === 0 && end.getHours() === 0 && end.getMinutes() === 0 && end.getSeconds() === 0) {
-            this.setState({ allDay: true, start: start, end: end, isOpen: true });
+            let some = moment(end).add(23, 'hours').add(59, 'minutes').add(59, 'seconds');
+            end = some._d;
+            range = true;
         }
+        this.setState({ allDay: range, start: start, end: end, isOpen: true });
+    }
 
-        // this.setState({ isOpen: true });
-        
-        /*
-        const title = window.prompt("New Event name");
-        if (title) {
-            var newEvent = {
-                start: start,
-                end: end,
-                title: title
-            }
-            console.log(newEvent)
-            this.onAddItem(newEvent);
-        }
-        */
+    eventDetails (event) {
+        console.log(event)
+        this.setState({ showDetais: true, edit: false, item:event, isOpen: true });
     }
 
     // handle changes in form values
@@ -106,16 +110,25 @@ class EventsCalendar extends Component {
         event.preventDefault();
         var self = this;
         self.setState({ loading: true });
-        const { start, end, title, description, frecuency } = this.state;
+        const { start, end, title, description, allDay, frecuency } = this.state;
         const data = {
             start, 
             end, 
             title, 
             description, 
-            frecuency
+            frecuency,
+            allDay
         }
-
-        console.log(data);
+        
+        self.state.myEventsList.forEach(function (arrayItem) {            
+            if ((data.start >= arrayItem.start && data.start < arrayItem.end) || (data.end >= arrayItem.start && data.end < arrayItem.end)) {
+                console.log("The dates selectes are al ready reserved.")
+                self.setState({ error: "The selected dates are already reserved.", loading:false });
+                return
+            }
+        });
+        
+        /*
         this.props.firebase.agenda()
             .add(data)
             .then(() => {                            
@@ -126,26 +139,41 @@ class EventsCalendar extends Component {
             .catch(function(error) {
                 var message = error;
                 console.log(message);
-                self.setState({ ...INITIAL_STATE }, () => {                    
+                self.setState({ ...INITIAL_STATE }, () => {
                     // console.log(message);
-                    self.setState({ error: 'An error has occured, provide this info to your provider: '+ message, loading: false });                    
-                });                
-            });        
+                    self.setState({ error: 'An error has occured, provide this info to your provider: '+ message, loading: false });
+                });
+            });
+        */
     }
 
     render() {
         return (
             <>
             { this.state.loading === false ? (
-                <div style={{height: '100vh', margin: '10px'}}>
+                <div style={{height: '100vh', margin: '10px'}}>                    
+                    { this.state.success &&
+                        <div className="alert alert-success" role="alert">
+                            { this.state.success }
+                        </div> 
+                    }
                     { this.state.isOpen ? 
-                    <ModalForm closeModal={this.closeModal} isOpen={this.state.isOpen} handleSubmit={this.handleSubmit}>
+                    <ModalForm closeModal={this.closeModal} isOpen={this.state.isOpen}>                        
+                        { this.state.showDetais === false ? (
                         <EventForm start={this.state.start} end={this.state.end} 
                             onChange={this.onChange} allDay={this.state.allDay} onChangeCheckbox={this.onChangeCheckbox}
                             onChangeDates={this.onChangeDates} title={this.state.title}
                             frecuency={this.state.frecuency} description={this.state.description}
-                            onSubmit={this.onSubmit}
+                            error={this.state.error} onSubmit={this.onSubmit}
                         />
+                        ) :(
+                        <EventFormEdit  data={this.state.item}
+                            onChange={this.onChange} onChangeCheckbox={this.onChangeCheckbox}
+                            onChangeDates={this.onChangeDates}
+                            error={this.state.error} onSubmit={this.onSubmit}
+                        />
+                        )
+                        }
                     </ModalForm> 
                     : 
                     null 
@@ -156,7 +184,7 @@ class EventsCalendar extends Component {
                         events={this.state.myEventsList}
                         startAccessor="start"
                         endAccessor="end"
-                        onSelectEvent={event => alert(event.title)}
+                        onSelectEvent={(event) => this.eventDetails(event)}
                         onSelectSlot={this.handleSelect}
                         titleAccessor='title'
                         messages={{
@@ -178,6 +206,99 @@ class EventsCalendar extends Component {
   }
 }
 
+class EventFormEdit extends Component {
+    render () {
+        return (
+            <form onSubmit={this.props.onSubmit}>
+                <div className="form-row">
+                    <div className="form-group col-md-12">
+                        <label className="form-label form-label-sm" htmlFor="inputEvent4">Event</label>
+                        <input type="event" className="form-control form-control-sm" id="inputEvent4" name="title" value={this.props.data.title} onChange={this.props.onChange} placeholder="Appointment with Peter Parker" required disabled />
+                    </div>
+                </div>
+                <div className="form-row">
+                    <div className="form-group col-md-6">                            
+                        <DatePicker dateFormat="dd MMMM, yyyy" className="form-control form-control-sm" selected={this.props.data.start} onChange={date => this.props.onChangeDates(date, "start")} required disabled />              
+                    </div>
+                    
+                    { this.props.data.allDay &&
+                    <div className="form-group col-md-6">                            
+                        <DatePicker dateFormat="dd MMMM, yyyy" className="form-control form-control-sm" selected={this.props.data.end} onChange={date => this.props.onChangeDates(date, "end")} required disabled />              
+                    </div>
+                    }
+                    
+                    { !this.props.data.allDay &&
+                    <>                    
+                    <div className="form-group col col-md-3">
+                        <DatePicker
+                            selected={this.props.data.start}
+                            onChange={date => this.props.onChangeDates(date, "start")}
+                            showTimeSelect
+                            showTimeSelectOnly
+                            timeIntervals={30}
+                            timeCaption="Time"
+                            dateFormat="h:mm aa"
+                            className="form-control form-control-sm"
+                            disabled
+                        />
+                    </div>
+                    <div className="form-group col col-md-3">
+                        <DatePicker
+                            selected={this.props.data.end}
+                            onChange={date => this.props.onChangeDates(date, "end")}
+                            showTimeSelect
+                            showTimeSelectOnly
+                            timeIntervals={30}
+                            timeCaption="Time"
+                            dateFormat="h:mm aa"
+                            className="form-control form-control-sm"
+                            disabled
+                        />
+                    </div>
+                    </>
+                    }
+                </div>
+                <div className="form-row">
+                <div className="form-group col-md-12">
+                    <div className="form-check">
+                    <input className="form-check-input" type="checkbox" id="gridCheck" name="allDay" value={this.props.data.allDay} onChange={this.props.onChangeCheckbox} disabled />
+                    <label className="form-check-label" htmlFor="gridCheck">
+                        all day
+                    </label>
+                    </div>            
+                </div>
+                <div className="form-group col-md-8">                
+                    <select id="inputState" className="form-control form-control-sm" name="frecuency" value={this.props.data.frecuency} onChange={this.props.onChange} disabled >
+                    <option value="Not Repeated">Not Repeated</option>
+                    <option value="Every Day">Every Day</option>
+                    <option value="Every Week on Monday">Every Week on Monday</option>
+                    <option value="Every Month on 2nd Monday">Every Month on 2nd Monday</option>
+                    <option value="Every Year on  March 17">Every Year on  March 17</option>
+                    </select>           
+                </div>
+                </div>
+                <div className="form-row">            
+                    <div className="form-group col-md-12">
+                        <label htmlFor="exampleFormControlTextarea1">Description</label>
+                        <textarea className="form-control form-control-sm" id="exampleFormControlTextarea1" name="description" value={this.props.data.description} onChange={this.props.onChange} rows="2" disabled />
+                    </div>
+                </div>
+                { this.props.error &&
+                    <div className="alert alert-danger" role="alert">
+                        { this.props.error }
+                    </div> 
+                }
+                <hr/>
+                <div className="row justify-content-end">
+                    <div className="col-md-3">
+                        <button type="submit" className="btn btn-primary">Save</button>
+                    </div>                    
+                </div>                
+            </form>
+        )
+    }
+}
+
 class EventForm extends Component {
     render () {
         return (
@@ -185,7 +306,7 @@ class EventForm extends Component {
                 <div className="form-row">
                     <div className="form-group col-md-12">
                         <label className="form-label form-label-sm" htmlFor="inputEvent4">Event</label>
-                        <input type="event" className="form-control form-control-sm" id="inputEvent4" name="title" value={this.props.title} onChange={this.props.onChange} placeholder="Appointment with Peter Parker" />
+                        <input type="event" className="form-control form-control-sm" id="inputEvent4" name="title" value={this.props.title} onChange={this.props.onChange} placeholder="Appointment with Peter Parker" required />
                     </div>
                 </div>
                 <div className="form-row">
@@ -253,6 +374,11 @@ class EventForm extends Component {
                         <textarea className="form-control form-control-sm" id="exampleFormControlTextarea1" name="description" value={this.props.description} onChange={this.props.onChange} rows="2" />
                     </div>
                 </div>
+                { this.props.error &&
+                    <div className="alert alert-danger" role="alert">
+                        { this.props.error }
+                    </div> 
+                }
                 <hr/>
                 <div className="row justify-content-end">
                     <div className="col-md-3">
