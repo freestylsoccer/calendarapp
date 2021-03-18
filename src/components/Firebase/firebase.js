@@ -103,8 +103,12 @@ class Firebase {
         fallback();
       }      
     });
+  
   // *** User API ***
   users = () => this.db.collection('users');
+
+  // *** Calendar API ***
+  agenda = () => this.db.collection('agenda');
 
   // *** Attendance API ***
   attWorkSchedule = () => this.db.collection('WorkSchedule');

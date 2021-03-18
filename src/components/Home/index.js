@@ -3,12 +3,6 @@ import React, {Component} from 'react';
 import { AuthUserContext, withAuthorization } from '../Session';
 
 import EventsCalendar from '../Agenda/agenda';
-
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { library } from "@fortawesome/fontawesome-svg-core";
-import { faClock, faSignInAlt, faSignOutAlt } from "@fortawesome/free-solid-svg-icons";
-
-library.add(faClock, faSignInAlt, faSignOutAlt);
  
 class HomePage extends Component {
   constructor(props) {
