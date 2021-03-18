@@ -4,7 +4,7 @@ import {
     momentLocalizer,
   } from 'react-big-calendar'
 import moment from "moment";
-import ModalForm from './modal';
+import ModalForm from '../Modal/Modal';
 
 
 require('moment/locale/es.js');
@@ -16,7 +16,7 @@ class EventsCalendar extends Component {
     constructor (props) {
         super(props)
         this.state = {
-            isOpen: true,
+            isOpen: false,
             myEventsList: [
                 {
                     title: "today",
@@ -64,9 +64,7 @@ class EventsCalendar extends Component {
     
     render() {
         return (
-            <div style={{height: '100vh', margin: '10px'}}>
-                <button className="btn btn-primary" onClick={this.openModal}>Display Modal Form</button>
-
+            <div style={{height: '100vh', margin: '10px'}}>                
                 { this.state.isOpen ? 
                 <ModalForm 
                     closeModal={this.closeModal} 
