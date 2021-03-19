@@ -12,7 +12,7 @@ export default class ModalForm extends Component {
         onHide={this.props.closeModal}
       >
       <Modal.Header closeButton>
-        <Modal.Title>New Event</Modal.Title>
+        <Modal.Title>Calendar Event</Modal.Title>
       </Modal.Header>
       <Modal.Body>
         {this.props.children}
