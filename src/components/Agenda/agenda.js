@@ -51,8 +51,21 @@ class EventsCalendar extends Component {
         this.onNavigate = this.onNavigate.bind(this);
     }
 
+    filterTimes = (date) => {
+        var array = [];
+        for (var i=0; i<this.state.toExcludeTimes.length; i++) {
+            var dt = new Date(this.state.toExcludeTimes[i].getTime());            
+            if(dt.setHours(0,0,0,0) === date.setHours(0,0,0,0)) {
+                array.push(this.state.toExcludeTimes[i]);
+            }
+        }
+        this.setState({ excludeTime: array });
+    }
+
     componentDidUpdate(prevProps, prevState) {
-        
+        if (prevState.start !== this.state.start) {
+            this.filterTimes(this.state.start);
+        }
     }
 
     getEvents = (startDate, endDate) => {
@@ -79,13 +92,14 @@ class EventsCalendar extends Component {
                             this.getTimes(entity.start, a.diff(b, 'hours'))
                         }
                     });
-                     
+                    console.log(this.state.toExcludeTimes)
+                    this.filterTimes(new Date());
                     this.setState({ myEventsList: newEntities });
                 },
                 error => {
                     console.log(error);
                 }
-            )
+            );
     }
 
     getTimes = function(startDate, h) {
@@ -137,8 +151,11 @@ class EventsCalendar extends Component {
         let endDate =  moment(startDate).add(35, 'days');
         endDate = endDate._d;
 
-        this.getEvents(startDate, endDate);
-        
+        this.getEvents(startDate, endDate);        
+    }
+
+    componentWillUnmount = () => {
+        this.getEvents();
     }
 
     openModal = () => this.setState({ isOpen: true });
@@ -309,7 +326,7 @@ class EventsCalendar extends Component {
                             onChange={this.onChange} allDay={this.state.allDay} onChangeCheckbox={this.onChangeCheckbox}
                             onChangeDates={this.onChangeDates} title={this.state.title}
                             toExcludeDates={this.state.toExcludeDates} excludeTime={this.state.excludeTime} 
-                            filterTimes={this.filterTimes} setMinTime={this.setMinTime}
+                            setMinTime={this.setMinTime}
                             frecuency={this.state.frecuency} description={this.state.description}
                             error={this.state.error} onSubmit={this.onSubmit}
                         />
@@ -508,7 +525,7 @@ class EventForm extends Component {
                             showTimeSelect
                             showTimeSelectOnly
                             timeIntervals={60}
-                            excludeTimes={this.props.toExcludeTimes}
+                            excludeTimes={this.props.excludeTime}
                             minTime={new Date(this.props.start.getFullYear(), this.props.start.getMonth(), this.props.start.getDay(), 9)}
                             maxTime={new Date(this.props.start.getFullYear(), this.props.start.getMonth(), this.props.start.getDay(), 20)}
                             timeCaption="Time"
